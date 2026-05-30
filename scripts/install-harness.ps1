@@ -298,7 +298,12 @@ function Invoke-RefreshAgentShim {
 function Get-CliPlatform {
     if ($env:HARNESS_CLI_PLATFORM) { return $env:HARNESS_CLI_PLATFORM }
 
-    if ($IsLinux) {
+    # $IsLinux and $IsMacOS exist only in PowerShell 7+.  On Windows
+    # PowerShell 5.1 they are undefined, so default to $false.
+    $linux = if (Get-Variable -Name IsLinux -ValueOnly -ErrorAction SilentlyContinue) { $true } else { $false }
+    $mac   = if (Get-Variable -Name IsMacOS -ValueOnly -ErrorAction SilentlyContinue) { $true } else { $false }
+
+    if ($linux) {
         $arch = uname -m
         switch ($arch) {
             "x86_64"  { return "linux-x64" }
@@ -307,7 +312,7 @@ function Get-CliPlatform {
             default   { Fail "Unsupported Linux architecture: $arch" }
         }
     }
-    elseif ($IsMacOS) {
+    elseif ($mac) {
         $arch = uname -m
         switch ($arch) {
             "arm64"   { return "macos-arm64" }
