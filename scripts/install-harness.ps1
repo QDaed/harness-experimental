@@ -116,7 +116,7 @@ function Merge-Gitignore {
     if ($null -eq $content) { $content = "" }
 
     $allPresent = $true
-    foreach ($rule in @("harness.db", "harness.db-wal", "harness.db-shm", "scripts/bin/harness-cli")) {
+    foreach ($rule in $rules) {
         if ($content -notmatch [regex]::Escape($rule)) {
             $allPresent = $false
             break
@@ -318,9 +318,15 @@ function Get-CliPlatform {
     else {
         # Windows
         $arch = $env:PROCESSOR_ARCHITECTURE
+        # On 64-bit Windows running a 32-bit PowerShell process, PROCESSOR_ARCHITECTURE
+        # reports "x86"; check PROCESSOR_ARCHITEW6432 to detect the real machine arch.
+        if ($arch -eq "x86" -and $env:PROCESSOR_ARCHITEW6432) {
+            $arch = $env:PROCESSOR_ARCHITEW6432
+        }
         switch ($arch) {
             "AMD64" { return "windows-x64" }
             "x86"   { return "windows-x64" }
+            "ARM64" { return "windows-arm64" }
             default { Fail "Unsupported Windows architecture: $arch" }
         }
     }
@@ -358,7 +364,8 @@ function Install-HarnessCliBinary {
     }
 
     if ($DryRun) {
-        Log "download $binaryName -> scripts/bin/harness-cli"
+        $dryRunTarget = if ($platform -like "windows-*") { "scripts/bin/harness-cli.exe" } else { "scripts/bin/harness-cli" }
+        Log "download $binaryName -> $dryRunTarget"
         Log "verify   ${binaryName}.sha256"
         $script:Created++
         return
