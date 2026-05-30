@@ -65,17 +65,17 @@ https://openai.com/index/harness-engineering/
 From a target project directory, run:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --yes
+curl -fsSL "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --yes
 ```
 
 If the target already has `AGENTS.md`, `docs/`, or `scripts/`, choose one:
 
 ```bash
 # Update an existing Harness repo without moving existing files
-curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --merge --yes
+curl -fsSL "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --merge --yes
 
 # Back up and replace AGENTS.md, docs/, and scripts/
-curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --override --yes
+curl -fsSL "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --override --yes
 ```
 
 Use `--merge` when a project already has Harness and you want to append newly
@@ -87,7 +87,7 @@ For older Harness installs whose `AGENTS.md` still contains the full generated
 operating guide, refresh it into the small stable shim:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --merge --refresh-agent-shim --yes
+curl -fsSL "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --merge --refresh-agent-shim --yes
 ```
 
 The refresh backs up the existing file. If it detects the old
@@ -98,7 +98,7 @@ project's local instructions.
 Or install into a specific path:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --directory /path/to/project --yes
+curl -fsSL "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --directory /path/to/project --yes
 ```
 
 Use `--dry-run` to preview changes before writing files.
@@ -109,7 +109,7 @@ From a PowerShell prompt in your target project directory:
 
 ```powershell
 # Download and run the installer
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.ps1" -OutFile install-harness.ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QDaed/harness-experimental/main/scripts/install-harness.ps1" -OutFile install-harness.ps1
 .\install-harness.ps1 -Yes
 ```
 
@@ -139,6 +139,66 @@ After installation, use the PowerShell wrapper:
 .\scripts\harness.ps1 intake --type "new spec" --summary "Add auth" --lane normal
 ```
 
+### Download Pre-built Binaries
+
+Pre-built binaries are published as GitHub Release assets. Download the
+latest release for your platform:
+
+| Platform | Binary | Checksum |
+|----------|--------|----------|
+| Windows x64 | `harness-cli-windows-x64.exe` | `harness-cli-windows-x64.exe.sha256` |
+| macOS ARM64 | `harness-cli-macos-arm64` | `harness-cli-macos-arm64.sha256` |
+| macOS x64 | `harness-cli-macos-x64` | `harness-cli-macos-x64.sha256` |
+| Linux x64 | `harness-cli-linux-x64` | `harness-cli-linux-x64.sha256` |
+| Linux ARM64 | `harness-cli-linux-arm64` | `harness-cli-linux-arm64.sha256` |
+
+**Download from the latest release:**
+
+```text
+https://github.com/QDaed/harness-experimental/releases/latest
+```
+
+Or download directly with PowerShell:
+
+```powershell
+# Download the Windows binary
+$tag = "v0.2.0"  # replace with desired release tag
+Invoke-WebRequest -Uri "https://github.com/QDaed/harness-experimental/releases/download/$tag/harness-cli-windows-x64.exe" -OutFile harness-cli.exe
+
+# Verify checksum
+Invoke-WebRequest -Uri "https://github.com/QDaed/harness-experimental/releases/download/$tag/harness-cli-windows-x64.exe.sha256" -OutFile harness-cli.sha256
+(Get-FileHash harness-cli.exe -Algorithm SHA256).Hash.ToLower()
+Get-Content harness-cli.sha256
+```
+
+Or with curl (macOS/Linux):
+
+```bash
+tag="v0.2.0"  # replace with desired release tag
+curl -fsSLO "https://github.com/QDaed/harness-experimental/releases/download/$tag/harness-cli-linux-x64"
+curl -fsSLO "https://github.com/QDaed/harness-experimental/releases/download/$tag/harness-cli-linux-x64.sha256"
+sha256sum -c harness-cli-linux-x64.sha256
+chmod +x harness-cli-linux-x64
+```
+
+### Creating a Release
+
+To build and publish release binaries, push a tag:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The `Harness CLI Release` GitHub Actions workflow will:
+1. Run formatting checks and tests
+2. Cross-compile the Rust CLI for all 5 platforms (including Windows `.exe`)
+3. Generate SHA256 checksums for each binary
+4. Create a GitHub Release and upload all artifacts
+
+You can also trigger a release manually from the Actions tab using
+`workflow_dispatch` with an optional `release_tag` input.
+
 ### Platform Details
 
 The installer downloads the prebuilt Harness CLI for the current platform,
@@ -148,12 +208,6 @@ The Rust CLI is the main Harness tool. Installed projects keep
 `scripts/harness` (bash) or `scripts/harness.ps1` (PowerShell) as the
 stable command path, and that entrypoint uses the Rust binary for normal
 Harness work.
-
-Harness CLI release assets are published from tags by the
-`Harness CLI Release` GitHub Actions workflow. The installer expects each
-release to include `harness-cli-<platform>` and
-`harness-cli-<platform>.sha256` assets for macOS arm64, macOS x64, Linux x64,
-Linux arm64, and Windows x64.
 
 ## Try The Flow
 
