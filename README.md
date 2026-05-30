@@ -103,17 +103,57 @@ curl -fsSL "https://raw.githubusercontent.com/hoangnb24/harness-experimental/mai
 
 Use `--dry-run` to preview changes before writing files.
 
-The installer also downloads the prebuilt Harness CLI for the current platform,
+### Install On Windows (PowerShell)
+
+From a PowerShell prompt in your target project directory:
+
+```powershell
+# Download and run the installer
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main/scripts/install-harness.ps1" -OutFile install-harness.ps1
+.\install-harness.ps1 -Yes
+```
+
+With conflict resolution:
+
+```powershell
+# Merge: keep existing files, add missing Harness files
+.\install-harness.ps1 -Merge -Yes
+
+# Override: back up and replace AGENTS.md, docs/, and scripts/
+.\install-harness.ps1 -Override -Yes
+```
+
+Install into a specific path:
+
+```powershell
+.\install-harness.ps1 -Directory C:\Projects\myapp -Yes
+```
+
+Use `-DryRun` to preview changes. Use `-Force` to overwrite with backups.
+
+After installation, use the PowerShell wrapper:
+
+```powershell
+.\scripts\harness.ps1 init
+.\scripts\harness.ps1 query matrix
+.\scripts\harness.ps1 intake --type "new spec" --summary "Add auth" --lane normal
+```
+
+### Platform Details
+
+The installer downloads the prebuilt Harness CLI for the current platform,
 verifies its `.sha256` checksum, and installs it at
-`scripts/bin/harness-cli`. The Rust CLI is the main Harness tool. Installed
-projects keep `scripts/harness` as the stable command path, and that entrypoint
-uses the Rust binary for normal Harness work.
+`scripts/bin/harness-cli` (or `scripts/bin/harness-cli.exe` on Windows).
+The Rust CLI is the main Harness tool. Installed projects keep
+`scripts/harness` (bash) or `scripts/harness.ps1` (PowerShell) as the
+stable command path, and that entrypoint uses the Rust binary for normal
+Harness work.
 
 Harness CLI release assets are published from tags by the
 `Harness CLI Release` GitHub Actions workflow. The installer expects each
 release to include `harness-cli-<platform>` and
 `harness-cli-<platform>.sha256` assets for macOS arm64, macOS x64, Linux x64,
-and Linux arm64.
+Linux arm64, and Windows x64.
 
 ## Try The Flow
 

@@ -341,8 +341,10 @@ detect_cli_platform() {
     Darwin:x86_64) printf 'macos-x64' ;;
     Linux:x86_64)  printf 'linux-x64' ;;
     Linux:aarch64|Linux:arm64) printf 'linux-arm64' ;;
+    MINGW*:x86_64|MSYS*:x86_64|CYGWIN*:x86_64) printf 'windows-x64' ;;
+    MINGW*:*|MSYS*:*|CYGWIN*:*) printf 'windows-x64' ;;
     *)
-      fail "Unsupported Harness CLI platform: $os/$arch."
+      fail "Unsupported Harness CLI platform: $os/$arch. On Windows, use scripts/install-harness.ps1 instead."
       ;;
   esac
 }
@@ -367,12 +369,18 @@ download_file() {
 install_harness_cli_binary() {
   [ "$INSTALL_RUST_CLI" -eq 1 ] || return 0
 
-  local platform binary_name binary_url checksum_url target tmp_dir binary_tmp checksum_tmp expected actual
+  local platform binary_name binary_url checksum_url target tmp_dir binary_tmp checksum_tmp expected actual exe_ext
   platform="${HARNESS_CLI_PLATFORM:-$(detect_cli_platform)}"
-  binary_name="harness-cli-$platform"
+
+  case "$platform" in
+    windows-*) exe_ext=".exe" ;;
+    *)         exe_ext="" ;;
+  esac
+
+  binary_name="harness-cli-${platform}${exe_ext}"
   binary_url="$CLI_BASE_URL/$binary_name"
   checksum_url="$binary_url.sha256"
-  target="$TARGET_DIR/scripts/bin/harness-cli"
+  target="$TARGET_DIR/scripts/bin/harness-cli${exe_ext}"
 
   if [ -e "$target" ] && [ "$CONFLICT_ACTION" = "merge" ] && [ "$FORCE" -eq 0 ]; then
     log "skip     scripts/bin/harness-cli (merge keeps existing file)"
