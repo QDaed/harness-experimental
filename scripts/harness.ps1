@@ -76,4 +76,4 @@ else {
     & $RustCli --help
 }
 
-exit $LASTEXITCODE
+exit ($LASTEXITCODE -as [int])
