@@ -105,7 +105,7 @@ esac
   cargo "${cargo_args[@]}"
 )
 
-[ -x "$binary" ] || fail "Expected compiled binary missing: $binary"
+[ -f "$binary" ] || fail "Expected compiled binary missing: $binary"
 
 mkdir -p "$out_dir"
 artifact="$out_dir/harness-cli-${platform}${exe_ext}"

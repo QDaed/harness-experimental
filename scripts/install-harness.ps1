@@ -503,14 +503,14 @@ $script:SourceBaseUrl = if ($env:HARNESS_SOURCE_BASE_URL) {
     $env:HARNESS_SOURCE_BASE_URL.TrimEnd("/")
 }
 else {
-    "https://raw.githubusercontent.com/hoangnb24/harness-experimental/main"
+    "https://raw.githubusercontent.com/QDaed/harness-experimental/main"
 }
 
 $script:CliBaseUrl = if ($env:HARNESS_CLI_BASE_URL) {
     $env:HARNESS_CLI_BASE_URL.TrimEnd("/")
 }
 else {
-    "https://github.com/hoangnb24/harness-experimental/releases/latest/download"
+    "https://github.com/QDaed/harness-experimental/releases/latest/download"
 }
 
 if ($scriptDir -and (Test-Path (Join-Path (Split-Path $scriptDir -Parent) "AGENTS.md")) -and
