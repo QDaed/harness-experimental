@@ -20,10 +20,12 @@ The produced files are:
 
 Supported platform labels:
 
-  aarch64-apple-darwin      -> macos-arm64
-  x86_64-apple-darwin       -> macos-x64
-  x86_64-unknown-linux-gnu  -> linux-x64
-  aarch64-unknown-linux-gnu -> linux-arm64
+  aarch64-apple-darwin        -> macos-arm64
+  x86_64-apple-darwin         -> macos-x64
+  x86_64-unknown-linux-gnu    -> linux-x64
+  aarch64-unknown-linux-gnu   -> linux-arm64
+  x86_64-pc-windows-msvc      -> windows-x64
+  aarch64-pc-windows-msvc     -> windows-arm64
 EOF
 }
 
@@ -66,12 +68,26 @@ done
 
 if [ -n "$target" ]; then
   cargo_args=(build --package harness-cli --profile "$profile" --target "$target")
-  binary="$repo_root/target/$target/$profile/harness-cli"
   triple="$target"
 else
   cargo_args=(build --package harness-cli --profile "$profile")
-  binary="$repo_root/target/$profile/harness-cli"
   triple="$(rustc -vV | awk '/^host:/ { print $2 }')"
+fi
+
+# Determine binary path and extension based on target
+case "$triple" in
+  *-windows-*|*-pc-windows-*)
+    exe_ext=".exe"
+    ;;
+  *)
+    exe_ext=""
+    ;;
+esac
+
+if [ -n "$target" ]; then
+  binary="$repo_root/target/$target/$profile/harness-cli${exe_ext}"
+else
+  binary="$repo_root/target/$profile/harness-cli${exe_ext}"
 fi
 
 case "$triple" in
@@ -79,6 +95,8 @@ case "$triple" in
   x86_64-apple-darwin) platform="macos-x64" ;;
   x86_64-unknown-linux-gnu) platform="linux-x64" ;;
   aarch64-unknown-linux-gnu) platform="linux-arm64" ;;
+  x86_64-pc-windows-msvc) platform="windows-x64" ;;
+  aarch64-pc-windows-msvc) platform="windows-arm64" ;;
   *) fail "Unsupported release target: $triple" ;;
 esac
 
@@ -90,9 +108,9 @@ esac
 [ -x "$binary" ] || fail "Expected compiled binary missing: $binary"
 
 mkdir -p "$out_dir"
-artifact="$out_dir/harness-cli-$platform"
+artifact="$out_dir/harness-cli-${platform}${exe_ext}"
 cp "$binary" "$artifact"
-chmod 755 "$artifact"
+chmod 755 "$artifact" 2>/dev/null || true
 
 if command -v shasum >/dev/null 2>&1; then
   (cd "$out_dir" && shasum -a 256 "$(basename "$artifact")" > "$(basename "$artifact").sha256")
